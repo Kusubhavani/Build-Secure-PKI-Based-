@@ -1,59 +1,70 @@
-# -------------------------
+# -------------------------------
 # Stage 1: Builder
-# -------------------------
-FROM python:3.11-slim AS builder
-
-WORKDIR /src
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements and install dependencies into a separate prefix
-COPY requirements.txt .
-RUN python -m pip install --upgrade pip \
-    && pip install --prefix=/install -r requirements.txt
-
-# Copy application code
-COPY app.py scripts/ /src/
-
-# -------------------------
-# Stage 2: Runtime
-# -------------------------
-FROM python:3.11-slim AS runtime
+# -------------------------------
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# Set timezone
-RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install runtime dependencies
+# Copy requirements first (optimizes caching)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+# -------------------------------
+# Stage 2: Runtime
+# -------------------------------
+FROM python:3.12-slim
+
+ENV TZ=UTC
+WORKDIR /app
+
+# Install cron, timezone tools, and python3 for cron job
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     tzdata \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed Python packages from builder
-COPY --from=builder /install /usr/local
+# Configure timezone
+RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
 
-# Copy application code from builder
-COPY --from=builder /src /app
+# Copy installed Python modules from builder
+COPY --from=builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
-# Copy cron jobs
+# Copy application code & keys
+COPY app /app/app
+COPY student_private.pem /app/student_private.pem
+COPY student_public.pem /app/student_public.pem
+COPY instructor_public.pem /app/instructor_public.pem
+
+# -------------------------------
+# Cron Setup
+# -------------------------------
+RUN mkdir -p /data && \
+    mkdir -p /cron && \
+    chmod 755 /data /cron
+
 COPY cron/2fa-cron /etc/cron.d/2fa-cron
 
-# Set permissions
-RUN chmod 0644 /etc/cron.d/2fa-cron \
-    && mkdir -p /data /cron /app/scripts \
-    && chmod -R 755 /data /cron /app/scripts
+RUN chmod 0644 /etc/cron.d/2fa-cron
+RUN crontab /etc/cron.d/2fa-cron
 
-# Copy entrypoint
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Expose port
+# -------------------------------
+# Expose API port
+# -------------------------------
 EXPOSE 8080
 
-# Start container
-ENTRYPOINT ["/entrypoint.sh"]
+# -------------------------------
+# Start cron + FastAPI app
+# -------------------------------
+CMD service cron start && \
+    uvicorn app.main:app --host 0.0.0.0 --port 8080
