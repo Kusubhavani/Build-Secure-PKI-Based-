@@ -1,13 +1,58 @@
-# Encrypted seed (sensitive)
+# ==============================
+#  PKI-2FA PROJECT .gitignore
+# ==============================
+
+# DO NOT ignore:
+# student_private.pem
+# student_public.pem
+# instructor_public.pem
+
+# Sensitive runtime file — MUST NOT COMMIT
 encrypted_seed.txt
 
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Environment files
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables
 .env
+.env.*
 
-# IDE files
+# Editor settings
 .vscode/
 .idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker PID files
+*.pid
+*.pid.lock
+
+# pytest
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Cron output (mounted volume, not stored in repo)
+cron-output/
+seed-data/
+
+# Don't ignore keys (required for evaluation)
+# student_private.pem
+# student_public.pem
+# instructor_public.pem
