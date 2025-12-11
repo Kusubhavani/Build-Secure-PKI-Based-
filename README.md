@@ -1,25 +1,14 @@
-PKI-Based Two-Factor Authentication (2FA)
+PKI-2FA — RSA + TOTP Two-Factor Authentication Microservice
+Project: PKI-Based 2FA Microservice 
+Port: 8080 (HTTP)
 
-This project implements a simple Two-Factor Authentication (2FA) system using:
+Project Summary
+This repository implements a secure, containerized microservice that demonstrates enterprise-grade security practices for two-factor authentication using:
 
-✔ Public-Key Cryptography (RSA) ✔ One-Time Password (OTP) ✔ Digital Signatures ✔ Python cryptography library
-
-Project Files File Description generate_keys.py Generates RSA private & public keys generate_otp.py Creates OTP & signs it using private key authenticate.py Verifies OTP & signature using public key student_private.pem Student's private key student_public.pem Student's public key otp.txt Stores generated OTP otp_signature.bin Digital signature of OTP
-
-Generate Keys → Creates RSA private/public key pair
-
-Generate OTP → Random 6-digit OTP → Signed using private key → Stored in otp.txt & otp_signature.bin
-
-Authenticate User → Enter OTP → Verify OTP + digital signature using public key → Shows Authentication Successful or Failed
-
-Commands Used python generate_keys.py python generate_otp.py python authenticate.py
-
-Technologies Used
-
-Python 3
-
-Cryptography Library (RSA, SHA-256, Signatures)
-
-Git & GitHub
-
-Linux-like CLI (Git Bash)
+RSA-4096 (OAEP-SHA256) for encrypted seed transport
+RSA-PSS (SHA-256) for commit signatures
+TOTP (SHA-1, 30s period, 6 digits) for 2FA generation/verification
+Cron job to log TOTP codes every minute
+Docker multi-stage build and docker-compose for easy deployment
+Persistent volumes for /data (seed) and /cron (cron logs)
+The project satisfies the assignment requirements: decrypting an instructor-provided encrypted seed, generating/verifying TOTP codes from the decrypted seed, cron logging, and providing cryptographic proof of work.
