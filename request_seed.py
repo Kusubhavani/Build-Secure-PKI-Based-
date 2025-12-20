@@ -30,6 +30,6 @@ def request_seed(student_id: str, github_repo_url: str, public_key_file: str = "
 
 if __name__ == "__main__":
     student_id = "23P31A42H1"
-    github_repo_url = "https://github.com/Kusubhavani/Build-Secure-PKI-Based-.git"
+    github_repo_url = "https://github.com/Kusubhavani/pki-2fa"
 
     request_seed(student_id, github_repo_url)
