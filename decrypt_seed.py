@@ -3,6 +3,12 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
 def decrypt_seed(encrypted_seed_b64: str, private_key):
+    # Clean and fix padding
+    encrypted_seed_b64 = encrypted_seed_b64.strip().replace("\n", "").replace(" ", "")
+    missing_padding = len(encrypted_seed_b64) % 4
+    if missing_padding != 0:
+        encrypted_seed_b64 += "=" * (4 - missing_padding)
+
     ciphertext = base64.b64decode(encrypted_seed_b64)
 
     plaintext = private_key.decrypt(
@@ -31,7 +37,7 @@ if __name__ == "__main__":
     private_key = load_private_key()
 
     with open("encrypted_seed.txt", "r") as f:
-        encrypted_seed = f.read().strip()
+        encrypted_seed = f.read()
 
     seed = decrypt_seed(encrypted_seed, private_key)
 
